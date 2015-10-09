@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>HW2 - Game of Life</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" type="text/css" href="a2.css">
+        <script src="js/libs/jquery/jquery.js"></script>
+        <script src="js/GameOfLife.js"></script>
+    </head>
+    <body>
+        <div id="optionsBar">
+            <p id="optionsHeading">Options</p>
+            <form id="cellCountForm">
+                <label> Number of Cells: <input id="cellCount" type="number" min="20" max="200" step="1" value="100" name="cellCount"></label><br>
+                <button id="cellCountSubmitButton">Submit</button>
+            </form>
+            <button id="startSim">Start</button><button id="stopSim">Stop</button>
+            <form id="simDelayForm">
+                <label> Simulation Step Delay in ms: <input id="simDelay" type="number" min="0" max="1000" step="1" value="500" name="simDelay"></label><br>
+                <button id="simDelaySubmitButton">Submit</button>
+            </form>
+            <button id="advSimButton">Next Simulation Step</button>
+            <button id="resetAllCellsButton">Reset All Cells</button>
+            <button id="rndFillCells">Randomly Fill Cells</button>
+            <form id="cellBeyondBoarderOptionsForm">
+                <fieldset>
+                    <legend>Evaluate Cell Neighbors Outside Boarder as:</legend>
+                    <input type="radio" name="cellBeyondBoarderOptions" value="dead" checked> Dead<br>
+                    <input type="radio" name="cellBeyondBoarderOptions" value="alive"> Alive<br>
+                    <input type="radio" name="cellBeyondBoarderOptions" value="toro"> Wrap to Opposite Edge of Field<br>
+                    <input type="submit" value="Submit">
+                </fieldset>
+            </form>
+            <form id="simOptionsForm">
+                <fieldset>
+                    <legend>Simulation Rules</legend>
+                    <label> Cell Neighborhood Radius: <input id="cellNeighborRadius" type="number" min="1" max="10" step="1" value="1" name="cellNeighborRadius"></label><br>
+                    <label> Death by Loneliness <input id="deathByLone" type="number" min="1" value="2" name="deathByLone"></label><br>
+                    <label> Death by Overpopulation: <input id="deathByOverpop" type="number" min="1" value="3" name="deathByOverpop"></label><br>
+                    <label> Generation min threshold: <input id="genMinThreshold" type="number" value="3" name="genMinThreshold"></label><br>
+                    <label> Generation max threshold: <input id="genMaxThreshold" type="number" value="3" name="genMaxThreshold"></label><br>
+                </fieldset>
+            </form>
+        </div>
+        <div id="gameField">
+        </div>
+    </body>
+</html>
