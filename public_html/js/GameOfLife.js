@@ -1,13 +1,13 @@
 
 $(document).ready(function () {
-    var size;
-    $("#cellCountSubmitButton").on("click", function () {
-       size = getGameFieldSize();
+    createGameField(10);
+    $("#cellCountSubmitButton").click(function (event) {
+        return getGameFieldSize();
     });
-    createGameField(size);
-    
-
-
+    $("#cellCountSubmitButton").click(function (event) {
+        createGameField(event.result);
+    });
+    //createGameField(size);
 
 });
 
