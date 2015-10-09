@@ -1,11 +1,11 @@
 
 $(document).ready(function () {
-    var size = 10;
+    var size;
     $("#cellCountSubmitButton").on("click", function () {
-        getGameFieldSize();
+       size = getGameFieldSize();
     });
-
     createGameField(size);
+    
 
 
 
