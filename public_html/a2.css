@@ -9,34 +9,30 @@ html, body {
     width: 300px;
     float: left;
 }
+#optionsHeading {
+    text-align: center;
+}
+#cellBeyondBoarderOptionsForm legend{
+    font-size: 10pt;
+}
 #gameField {
     background-color: gray;
     height: 100%;
     overflow: hidden;
-    
-}
-#optionsHeading {
-    text-align: center;
-}
-input[type="number"] {
-    
-}#cellBeyondBoarderOptionsForm legend{
-    font-size: 10pt;
 }
 .rowCell {
     color: red;
-    width: auto;
+    width: 100%;
     float: left;
     clear: both;
 }
 .columnCell {
     color: blue;
     background-color: lightblue;
-    width: 20px;
-    height: 20px;
+    width: 10px;
+    height: 10px;
     border: black;
     border-style: solid;
     border-width: 2px;
-    float: left;
-    
+    float: left; 
 }

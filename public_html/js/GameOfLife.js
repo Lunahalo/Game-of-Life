@@ -1,14 +1,14 @@
 
 $(document).ready(function () {
-    createGameField(10);
-    $("#cellCountSubmitButton").click(function (event) {
-        return getGameFieldSize();
-    });
-    $("#cellCountSubmitButton").click(function (event) {
-        createGameField(event.result);
-    });
+    //createGameField(40);
+    //$("#cellCountSubmitButton").click(function (event) {
+    //    return getGameFieldSize();
+    //});
+   // $("#cellCountSubmitButton").click(function (event) {
+   //     createGameField(event.result);
+   // });
     //createGameField(size);
-
+    
 });
 
 function createGameField(size) {
@@ -17,11 +17,10 @@ function createGameField(size) {
     for (var i = 0; i < size; i++) {
         $("#gameField").append($rowDiv.clone().attr("id", "rowCell" + i));
     }
-    // columnCell numbering index
-    var i = 0;
-    $(".rowCell").each(function () {
-        $(".rowCell").append($columnDiv.attr("id", "columnCell" + i));
-        i++;
+    $(".rowCell").each(function (index) {
+            for(var j = 0; j <size; j++) {
+                $(this).append($columnDiv.clone().attr("id", "columnCell"+j));
+            }
     });
 }
 
