@@ -8,7 +8,7 @@ $(document).ready(function () {
    //     createGameField(event.result);
    // });
     //createGameField(size);
-    
+    //
 });
 
 function createGameField(size) {
