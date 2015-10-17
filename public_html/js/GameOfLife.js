@@ -2,11 +2,6 @@
 /* global ctx, gameCanvas, sizeOfCell */
 
 $(document).ready(function () {
-    /*var c = document.getElementById("gameCanvas");
-     var ctx = c.getContext("2d");
-     ctx.moveTo(10,0);
-     ctx.lineTo(10,100);
-     ctx.stroke();*/
     ctx = $('#gameCanvas').get(0).getContext('2d');
     gameCanvas = ctx.canvas;
     gameCanvas.width = $('#gameFieldDiv').width();
@@ -52,12 +47,14 @@ function createGrid(numOfCellOnSize) {
 }
 
 /* Cell object type, stores the x, y index of the cell and if it is 0 = dead,
- * 1 = alive, or 2 = dead but was alive.
+ * 1 = alive, or 2 = dead but was alive.  It also stores if this cell is
+ * and edge cell.
  */
-function Cell(xindex, yindex, alive) {
+function Cell(xindex, yindex, alive, isEdge) {
     this.xindex = xindex;
     this.yindex = yindex;
     this.alive = alive;
+    this.isEdge = isEdge;
 }
 /* Creates and initializes 2D array with size of each dim given by numOfCells 
  * and returns that array.
@@ -70,11 +67,18 @@ function createCells(numOfCells) {
     for (var x = 0; x < cellRow; x++) {
         cellArray[x] = new Array();
         for (var y = 0; y < cellColumn; y++) {
-            cellArray[x][y] = new Cell(x, y, 0);
+            if (x === 0 || y === 0 || x === numOfCells - 1 || y === numOfCells - 1) {
+                cellArray[x][y] = new Cell(x, y, 0, true);
+            }
+            else {
+                cellArray[x][y] = new Cell(x, y, 0, false);
+            }
         }
     }
     return cellArray;
 }
+/* Randomly sets all cells in cellArray to either alive or dead.
+ */
 function randomize(cellArray) {
     for (var x = 0; x < cellArray.length; x++) {
         for (var y = 0; y < cellArray.length; y++) {
@@ -83,6 +87,40 @@ function randomize(cellArray) {
     }
 
 }
+/*function computeNextStep(cellArray) {
+    for (var x = 0; x < cellArray.length; x++) {
+        for (var y = 0; y < cellArray.length; y++) {
+            // There are enough cells around, so reproduce
+            if (reproduceOrDie(x, y, cellArray) === 1) {
+
+            }
+            // There are too many cells arond, so die
+            else if (reproduceOrDie(x, y, cellArray) === 0) {
+
+            }
+            else
+        }
+    }
+}*/
+/* Checks if the cell given by xIndex, yIndex in cellArray has enough
+ * neighbors to reproduce, do nothing, or die.  It will return 0 if the cell
+ * should die, 1 if it should reproduce, or 2 if it should do nothing.
+ * This functions does not have any bounds or error checking, the initial
+ * xIndex, yIndex in cellArray must be valid.
+ */
+function reproduceOrDie(xIndex, yIndex, cellArray) {
+    var numOfAliveNeighbors = 0;
+    var radius = 1;
+    for (var x = xIndex; x < radius; x++) {
+        if (cellArray[x + 1][yIndex].alive === 1) {
+
+        }
+    }
+
+}
+/*function cellAtEdge(xIndex, yIndex, cellArray) {
+    if (cellArray)
+}*/
 /* Runs through the 2D array given by cellArray and colors each grid
  * according that cells alive status.
  */
@@ -108,7 +146,7 @@ function render(cellArray) {
  * Color must be a valid color name or Hex value given as a String. 
  **/
 function colorCellAt(xIndex, yIndex, color) {
-    var offset = 0.5;
+    var offset = 1;
     var xpos = xIndex * sizeOfCell + offset;
     var ypos = yIndex * sizeOfCell + offset;
     ctx.fillStyle = color;
