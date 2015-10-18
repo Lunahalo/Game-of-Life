@@ -10,7 +10,7 @@ $(document).ready(function () {
     sizeOfCell = createGrid(20);
     var cellArray = createCells(20);
     render(cellArray);
-    reproduceOrDie(1, 1, cellArray);
+    reproduceOrDie(5, 5, cellArray);
     //alert(gameCanvas.width);
     //drawLine(10 , gameCanvas.hight);
     //createGameField(40);
@@ -113,7 +113,6 @@ function computeNextStep(cellArray) {
 function reproduceOrDie(xIndex, yIndex, cellArray) {
     var numOfAliveNeighbors = 0;
     var radius = 2;
-
     // 0 = edges dead, 1 = edges alive, 2 = edges wrap
     var cellEdgeMode = 0;
     for (var x = 0; x <= radius; x++) {
@@ -179,71 +178,33 @@ function reproduceOrDie(xIndex, yIndex, cellArray) {
                 }
             }
             if(cellEdgeMode === 0) {
-                if(yIndex - y >= 0) {
-                    if(cellArray[xIndex + x][yIndex - y].alive === 0) {
-                        colorCellAt(xIndex + x, yIndex - y, "red");
-                        numOfAliveNeighbors++;
-                    }
-                }
-                if(yIndex + y < cellArray.length) {
-                    if(cellArray[xIndex + x][yIndex + y].alive === 0) {
-                        colorCellAt(xIndex + x, yIndex + y, "red");
-                        numOfAliveNeighbors++;
-                    }
-                }
-                if(xIndex - x >= 0) {
-                    if(cellArray[xIndex - x][yIndex - y].alive === 0) {
-                        colorCellAt(xIndex + x, yIndex - y, "red");
-                        numOfAliveNeighbors++;
-                    }
-                }
                 if(xIndex + x < cellArray.length) {
-                    if(cellArray[xIndex - x][yIndex + y].alive === 0) {
-                        colorCellAt(xIndex + x, yIndex + y, "red");
-                        numOfAliveNeighbors++;
-                    }
-                }
-
-
-
-
-
-
-
-
-                //If you are on the top row, only check down in the y direction
-                if(yIndex === 0) {
-                    // Check that Index+x does not cause array index to be out of bounds
-                    if(xIndex + x < cellArray.length) {
-                        if(cellArray[xIndex + x][yIndex + y].alive === 1) {
+                    if(yIndex - y >= 0) {
+                        if(cellArray[xIndex + x][yIndex - y].alive === 1) {
                             numOfAliveNeighbors++;
                         }
                     }
-                    /* In the case where x = 0 xIndex + x and xIndex - x are equivalent 
-                     * and should be skipped.  Also check to make sure that xIndex -x is 
-                     * not going cause array index to be out of bounds*/
-                    if(x !== 0 && xIndex - x >= 0) {
-                        if(cellArray[xIndex - x][yIndex + y].alive === 1) {
-                            numOfAliveNeighbors++;
+                    if(y !== 0) {
+                        if(yIndex + y < cellArray.length) {
+                            if(cellArray[xIndex + x][yIndex + y].alive === 1) {
+                                numOfAliveNeighbors++;
+                            }
                         }
                     }
                 }
-                //If you are on the bottom row, only check up in the y direction
-                if(yIndex === cellArray.length - 1) {
-                    if(xIndex + x < cellArray.length) {
-                        if(cellArray[xIndex + x][yIndex - y].alive === 0) {
-                            numOfAliveNeighbors++;
-                            colorCellAt(xIndex + x, yIndex - y, "red");
+                if(x !== 0) {
+                    if(xIndex - x >= 0) {
+                        if(yIndex - y >= 0) {
+                            if(cellArray[xIndex - x][yIndex - y].alive === 1) {
+                                numOfAliveNeighbors++;
+                            }
                         }
-                    }
-                    /* In the case where x = 0 xIndex + x and xIndex - x are equivalent 
-                     * and should be skipped.  Also check to make sure that xIndex -x is 
-                     * not going cause array index to be out of bounds
-                     */
-                    if(x !== 0 && xIndex - x >= 0) {
-                        if(cellArray[xIndex - x][yIndex - y].alive === 0) {
-                            numOfAliveNeighbors++;
-                            colorCellAt(xIndex - x, yIndex - y, "red");
+                        if(y !== 0) {
+                            if(yIndex + y < cellArray.length) {
+                                if(cellArray[xIndex - x][yIndex + y].alive === 1) {
+                                    numOfAliveNeighbors++;
+                                }
+                            }
                         }
                     }
                 }
