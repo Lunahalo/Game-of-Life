@@ -10,7 +10,7 @@ $(document).ready(function () {
     sizeOfCell = createGrid(20);
     var cellArray = createCells(20);
     render(cellArray);
-    reproduceOrDie(0, 0, cellArray);
+    reproduceOrDie(1, 1, cellArray);
     //alert(gameCanvas.width);
     //drawLine(10 , gameCanvas.hight);
     //createGameField(40);
@@ -67,7 +67,7 @@ function createCells(numOfCells) {
     for (var x = 0; x < cellRow; x++) {
         cellArray[x] = new Array();
         for (var y = 0; y < cellColumn; y++) {
-            if (x === 0 || y === 0 || x === numOfCells - 1 || y === numOfCells - 1) {
+            if(x === 0 || y === 0 || x === numOfCells - 1 || y === numOfCells - 1) {
                 cellArray[x][y] = new Cell(x, y, 0);
             }
             else {
@@ -91,11 +91,11 @@ function computeNextStep(cellArray) {
     for (var x = 0; x < cellArray.length; x++) {
         for (var y = 0; y < cellArray.length; y++) {
             // There are enough cells around, so reproduce
-            if (reproduceOrDie(x, y, cellArray) === 1) {
+            if(reproduceOrDie(x, y, cellArray) === 1) {
                 alert("reproduce!");
             }
             // There are too many cells arond, so die
-            else if (reproduceOrDie(x, y, cellArray) === 0) {
+            else if(reproduceOrDie(x, y, cellArray) === 0) {
                 alert("die!");
             }
             else {
@@ -112,17 +112,23 @@ function computeNextStep(cellArray) {
  */
 function reproduceOrDie(xIndex, yIndex, cellArray) {
     var numOfAliveNeighbors = 0;
-    var radius = 3;
+    var radius = 2;
 
     // 0 = edges dead, 1 = edges alive, 2 = edges wrap
-    var cellEdgeMode = 2;
+    var cellEdgeMode = 0;
     for (var x = 0; x <= radius; x++) {
         for (var y = 0; y <= radius; y++) {
             /* if x === 0 and y === 0 we need to skip that iteration because we don't 
              * want to consider the center square to see if it is its own neighbor
              */
-            if (x === 0 && y === 0) continue;
-            if (cellEdgeMode === 2) {
+            if(x === 0 && y === 0)
+                continue;
+            if(cellEdgeMode === 2) {
+                /* The pattern to check the radius is starting at the x = xIndex, look up then down, 
+                 * and expand out in the y direction (up up, down down, ect.)  Then with y = yIndex 
+                 * look right, then left.  Then right up, right down, right up up, right down down.  
+                 * Then left up, left down, left up up, left down down (ect.)
+                 * */
 
                 /* This monstrosity does wrapping. If xIndex - x is inside the normal array bounds
                  * then it is just normalIndex%cellArray.length, which is the same index,
@@ -137,129 +143,111 @@ function reproduceOrDie(xIndex, yIndex, cellArray) {
                  * -1 % 20 = -1
                  * -1 + 20 = 19
                  * 19 % 20 = 19
-                 * */
-
+                 */
                 //look right and up
                 var wrappedYUpIndex = (((yIndex - y) % cellArray.length) + cellArray.length) % cellArray.length;
                 var wrappedXRightIndex = (((xIndex + x) % cellArray.length) + cellArray.length) % cellArray.length;
-                if (cellArray[wrappedXRightIndex][wrappedYUpIndex].alive === 0) {
-                    colorCellAt(wrappedXRightIndex, wrappedYUpIndex, "red");
+                if(cellArray[wrappedXRightIndex][wrappedYUpIndex].alive === 1) {
                     numOfAliveNeighbors++;
                 }
                 /* In the case where y === 0 the expression for wrappedYDownIndex and wrappedYUpIndex 
                  * are equivalent, so we would be checking the same square twice
                  */
-                if (y !== 0) {
+                if(y !== 0) {
                     //look right and down
                     var wrappedYDownIndex = (((yIndex + y) % cellArray.length) + cellArray.length) % cellArray.length;
-                    if (cellArray[wrappedXRightIndex][wrappedYDownIndex].alive === 0) {
-                        colorCellAt(wrappedXRightIndex, wrappedYDownIndex, "red");
+                    if(cellArray[wrappedXRightIndex][wrappedYDownIndex].alive === 1) {
                         numOfAliveNeighbors++;
                     }
                 }
                 //if x === 0 then we would check above and the same squares twice
-                if (x !== 0) {
+                if(x !== 0) {
                     //look left and up
                     var wrappedXLeftIndex = (((xIndex - x) % cellArray.length) + cellArray.length) % cellArray.length;
-                    if (cellArray[wrappedXLeftIndex][wrappedYUpIndex].alive === 0) {
-                        colorCellAt(wrappedXLeftIndex, wrappedYUpIndex, "red");
+                    if(cellArray[wrappedXLeftIndex][wrappedYUpIndex].alive === 1) {
                         numOfAliveNeighbors++;
                     }
                     /* In the case where y === 0 the expression for wrappedYDownIndex and wrappedYUpIndex 
                      * are equivalent, so we would be checking the same square twice 
                      */
-                    if (y !== 0) {
+                    if(y !== 0) {
                         //look left and down
-                        if (cellArray[wrappedXLeftIndex][wrappedYDownIndex].alive === 0) {
-                            colorCellAt(wrappedXLeftIndex, wrappedYDownIndex, "red");
+                        if(cellArray[wrappedXLeftIndex][wrappedYDownIndex].alive === 1) {
                             numOfAliveNeighbors++;
                         }
                     }
                 }
-
-
-                /*//look left
-                 var wrappedXLeftIndex = (((xIndex - x) % cellArray.length) + cellArray.length) % cellArray.length;
-                 if (cellArray[wrappedXLeftIndex][yIndex + y].alive === 0) {
-                 colorCellAt(wrappedXLeftIndex,yIndex + y,"red");
-                 numOfAliveNeighbors++;
-                 }
-                 //look right
-                 var wrappedXRightIndex = (((xIndex + x) % cellArray.length) + cellArray.length) % cellArray.length;
-                 if (cellArray[wrappedXRightIndex][yIndex + y].alive === 0) {
-                 colorCellAt(wrappedXRightIndex,yIndex + y,"red");
-                 numOfAliveNeighbors++;
-                 }
-                 
-                 //check right, left, and diagonals out to radius
-                 for (var diagX = 1; diagX <= radius; diagX++) {
-                 var wrappedXLeftIndex = (((xIndex - diagX) % cellArray.length) + cellArray.length) % cellArray.length;
-                 var wrappedXRightIndex = (((xIndex + diagX) % cellArray.length) + cellArray.length) % cellArray.length;
-                 for (var diagY = 1; diagY <= radius; diagY++) {
-                 var wrappedYUpIndex = (((yIndex - diagY) % cellArray.length) + cellArray.length) % cellArray.length;
-                 var wrappedYDownIndex = (((yIndex + diagY) % cellArray.length) + cellArray.length) % cellArray.length;
-                 if(cellArray[wrappedXLeftIndex][wrappedYUpIndex].alive === 0 || cellArray[wrappedXLeftIndex][wrappedYDownIndex].alive === 0 ) {
-                 colorCellAt(wrappedXLeftIndex,wrappedYUpIndex,"red");
-                 colorCellAt(wrappedXLeftIndex, wrappedYDownIndex, "red");
-                 numOfAliveNeighbors++;
-                 }
-                 if(cellArray[wrappedXRightIndex][wrappedYUpIndex].alive === 0 || cellArray[wrappedXRightIndex][wrappedYDownIndex].alive === 0 ) {
-                 colorCellAt(wrappedXRightIndex,wrappedYUpIndex,"red");
-                 colorCellAt(wrappedXRightIndex, wrappedYDownIndex, "red");
-                 numOfAliveNeighbors++;
-                 }
-                 }
-                 }*/
-
             }
+            if(cellEdgeMode === 0) {
+                if(yIndex - y >= 0) {
+                    if(cellArray[xIndex + x][yIndex - y].alive === 0) {
+                        colorCellAt(xIndex + x, yIndex - y, "red");
+                        numOfAliveNeighbors++;
+                    }
+                }
+                if(yIndex + y < cellArray.length) {
+                    if(cellArray[xIndex + x][yIndex + y].alive === 0) {
+                        colorCellAt(xIndex + x, yIndex + y, "red");
+                        numOfAliveNeighbors++;
+                    }
+                }
+                if(xIndex - x >= 0) {
+                    if(cellArray[xIndex - x][yIndex - y].alive === 0) {
+                        colorCellAt(xIndex + x, yIndex - y, "red");
+                        numOfAliveNeighbors++;
+                    }
+                }
+                if(xIndex + x < cellArray.length) {
+                    if(cellArray[xIndex - x][yIndex + y].alive === 0) {
+                        colorCellAt(xIndex + x, yIndex + y, "red");
+                        numOfAliveNeighbors++;
+                    }
+                }
 
-            /*//If you are on the left side
-             if (xIndex === 0) {
-             //if cellEgdes are dead
-             if (cellEdgeMode === 0) {
-             //look right and if the right cell is alive add additional neighbor
-             if (cellArray[x + 1][y] === 1) {
-             numOfAliveNeighbors++;
-             }
-             }
-             else if (cellEdgeMode === 2) {
-             //if cellEdges are toroidal
-             if (cellArray[(cellArray.length - x) % cellArray.length][y].alive === 1) {
-             numOfAliveNeighbors++;
-             }
-             
-             }
-             
-             }
-             // If you are at the top and edgeCells are dead
-             if (yIndex === 0 && cellEdgeMode === 0) {
-             //look down and if cell is alive add additional neighbor
-             if (cellArray[x][y + 1].alive === 1) {
-             numOfAliveNeighbors++;
-             }
-             }
-             //If you are at the right side of the board
-             if (xIndex === cellArray.length - 1 && cellEdgeMode === 0) {
-             //look left and if cell is alive add additional neighbor
-             if (cellArray[x - 1][y].alive === 1) {
-             numOfAliveNeighbors++;
-             }
-             }
-             //If you are at the bottom and edgeCells are dead
-             if (yIndex === cellArray.length - 1 && cellEdgeMode === 0) {
-             //look up and if cell is alive add additional neighbor
-             if (cellArray[x][y - 1].alive === 1) {
-             numOfAliveNeighbors++;
-             }
-             }
-             else {
-             // look right and left if alive
-             }
-             }
-             
-             if (cellArray[x + 1][yIndex].alive === 1) {
-             
-             }*/
+
+
+
+
+
+
+
+                //If you are on the top row, only check down in the y direction
+                if(yIndex === 0) {
+                    // Check that Index+x does not cause array index to be out of bounds
+                    if(xIndex + x < cellArray.length) {
+                        if(cellArray[xIndex + x][yIndex + y].alive === 1) {
+                            numOfAliveNeighbors++;
+                        }
+                    }
+                    /* In the case where x = 0 xIndex + x and xIndex - x are equivalent 
+                     * and should be skipped.  Also check to make sure that xIndex -x is 
+                     * not going cause array index to be out of bounds*/
+                    if(x !== 0 && xIndex - x >= 0) {
+                        if(cellArray[xIndex - x][yIndex + y].alive === 1) {
+                            numOfAliveNeighbors++;
+                        }
+                    }
+                }
+                //If you are on the bottom row, only check up in the y direction
+                if(yIndex === cellArray.length - 1) {
+                    if(xIndex + x < cellArray.length) {
+                        if(cellArray[xIndex + x][yIndex - y].alive === 0) {
+                            numOfAliveNeighbors++;
+                            colorCellAt(xIndex + x, yIndex - y, "red");
+                        }
+                    }
+                    /* In the case where x = 0 xIndex + x and xIndex - x are equivalent 
+                     * and should be skipped.  Also check to make sure that xIndex -x is 
+                     * not going cause array index to be out of bounds
+                     */
+                    if(x !== 0 && xIndex - x >= 0) {
+                        if(cellArray[xIndex - x][yIndex - y].alive === 0) {
+                            numOfAliveNeighbors++;
+                            colorCellAt(xIndex - x, yIndex - y, "red");
+                        }
+                    }
+                }
+            }
         }
     }
 }
@@ -272,13 +260,13 @@ function render(cellArray) {
     var aliveColor = "#456ADA";
     for (var x = 0; x < cellArray.length; x++) {
         for (var y = 0; y < cellArray.length; y++) {
-            if (cellArray[x][y].alive === 0) {
+            if(cellArray[x][y].alive === 0) {
                 colorCellAt(x, y, deadNeverAliveColor);
             }
-            if (cellArray[x][y].alive === 2) {
+            if(cellArray[x][y].alive === 2) {
                 colorCellAt(x, y, deadWasAliveColor);
             }
-            if (cellArray[x][y].alive === 1) {
+            if(cellArray[x][y].alive === 1) {
                 colorCellAt(x, y, aliveColor);
             }
         }
