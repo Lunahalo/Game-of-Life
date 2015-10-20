@@ -6,7 +6,7 @@ html, body {
 #optionsBar {
     background-color: white;
     height: 100%;
-    width: 300px;
+    width: 250px;
     float: left;
 }
 #optionsHeading {
@@ -15,10 +15,16 @@ html, body {
 #cellBeyondBoarderOptionsForm legend{
     font-size: 10pt;
 }
-#gameField {
-    background-color: gray;
-    height: 100%;
+
+canvas {
+    display: block;
+}
+#gameFieldDiv {
+    background-color: black;
     overflow: hidden;
+    border: grey;
+    border-style: solid;
+    border-width: 2px;
 }
 .rowCell {
     color: red;

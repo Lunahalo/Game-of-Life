@@ -10,7 +10,7 @@ $(document).ready(function () {
     sizeOfCell = createGrid(20);
     var cellArray = createCells(20);
     render(cellArray);
-    reproduceOrDie(5, 5, cellArray);
+    reproduceOrDie(0, 0, cellArray);
     //alert(gameCanvas.width);
     //drawLine(10 , gameCanvas.hight);
     //createGameField(40);
@@ -112,9 +112,13 @@ function computeNextStep(cellArray) {
  */
 function reproduceOrDie(xIndex, yIndex, cellArray) {
     var numOfAliveNeighbors = 0;
-    var radius = 2;
+    var radius = 1;
+    var deathByLonelinessThresh = 2;
+    var deathByOverpop = 3;
+    var gMin = 3;
+    var gMax = 3;
     // 0 = edges dead, 1 = edges alive, 2 = edges wrap
-    var cellEdgeMode = 0;
+    var cellEdgeMode = 1;
     for (var x = 0; x <= radius; x++) {
         for (var y = 0; y <= radius; y++) {
             /* if x === 0 and y === 0 we need to skip that iteration because we don't 
@@ -178,13 +182,16 @@ function reproduceOrDie(xIndex, yIndex, cellArray) {
                 }
             }
             if(cellEdgeMode === 0) {
+                //Bounds checking to make sure there is never an array index out of bounds
                 if(xIndex + x < cellArray.length) {
                     if(yIndex - y >= 0) {
                         if(cellArray[xIndex + x][yIndex - y].alive === 1) {
                             numOfAliveNeighbors++;
                         }
                     }
+                    //If y = 0 then yIndex + y is the same as yIndex - y and it checks duplicate cells
                     if(y !== 0) {
+                        //Bounds checking to make sure there is never an array index out of bounds
                         if(yIndex + y < cellArray.length) {
                             if(cellArray[xIndex + x][yIndex + y].alive === 1) {
                                 numOfAliveNeighbors++;
@@ -192,14 +199,18 @@ function reproduceOrDie(xIndex, yIndex, cellArray) {
                         }
                     }
                 }
+                //if x = 0, then xIndex +x and xIndex -x are then same and it checks duplicate cells
                 if(x !== 0) {
+                    //Bounds checking to make sure there is never an array index out of bounds
                     if(xIndex - x >= 0) {
                         if(yIndex - y >= 0) {
                             if(cellArray[xIndex - x][yIndex - y].alive === 1) {
                                 numOfAliveNeighbors++;
                             }
                         }
+                        //If y = 0 then yIndex + y is the same as yIndex - y and it checks duplicate cells
                         if(y !== 0) {
+                            //Bounds checking to make sure there is never an array index out of bounds
                             if(yIndex + y < cellArray.length) {
                                 if(cellArray[xIndex - x][yIndex + y].alive === 1) {
                                     numOfAliveNeighbors++;
@@ -209,8 +220,97 @@ function reproduceOrDie(xIndex, yIndex, cellArray) {
                     }
                 }
             }
+            if(cellEdgeMode === 1) {
+                //Bounds checking to make sure there is never an array index out of bounds
+                if(xIndex + x < cellArray.length) {
+                    if(yIndex - y >= 0) {
+                        if(cellArray[xIndex + x][yIndex - y].alive === 1) {
+                            numOfAliveNeighbors++;
+                            //colorCellAt(xIndex + x, yIndex - y, "red");
+                        }
+                    }
+                    //Maybe issue here should be (yIndex - y) >= -1
+                    else if(Math.abs(yIndex - y) % (cellArray.length - 1) <= 1)
+                        numOfAliveNeighbors++;
+                }
+                else if((xIndex + x === cellArray.length) && (yIndex - y <= (cellArray.length)) && ((yIndex - y) >= -1))
+                    numOfAliveNeighbors++;
+                //If y = 0 then yIndex + y is the same as yIndex - y and it checks duplicate cells
+                if(y !== 0) {
+                    if(xIndex + x < cellArray.length) {
+                        //Bounds checking to make sure there is never an array index out of bounds
+                        if(yIndex + y < cellArray.length) {
+                            if(cellArray[xIndex + x][yIndex + y].alive === 1) {
+                                numOfAliveNeighbors++;
+                                //colorCellAt(xIndex + x, yIndex + y, "red");
+                            }
+                        }
+                        else if(Math.abs(yIndex + y) % (cellArray.length - 1) <= 1)
+                            numOfAliveNeighbors++;
+                    }
+                    else if((xIndex + x === cellArray.length) && ((yIndex + y) <= cellArray.length))
+                        numOfAliveNeighbors++;
+                }
+
+                //if x = 0, then xIndex +x and xIndex -x are then same and it checks duplicate cells
+                //Check left side
+                if(x !== 0) {
+                    //Bounds checking to make sure there is never an array index out of bounds
+                    if(xIndex - x >= 0) {
+                        if(yIndex - y >= 0) {
+                            if(cellArray[xIndex - x][yIndex - y].alive === 1) {
+                                numOfAliveNeighbors++;
+                                //colorCellAt(xIndex - x, yIndex - y, "red");
+                            }
+                        }
+                        else if(Math.abs(yIndex - y) % (cellArray.length - 1) <= 1)
+                            numOfAliveNeighbors++;
+                    }
+                    else if(xIndex - x === -1 && ((yIndex - y) >= -1))
+                        numOfAliveNeighbors++;
+                    //If y = 0 then yIndex + y is the same as yIndex - y and it checks duplicate cells
+                    if(y !== 0) {
+                        if(xIndex - x >= 0) {
+                            //Bounds checking to make sure there is never an array index out of bounds
+                            if(yIndex + y < cellArray.length) {
+                                if(cellArray[xIndex - x][yIndex + y].alive === 1) {
+                                    numOfAliveNeighbors++;
+                                    //colorCellAt(xIndex - x, yIndex + y, "red");
+                                }
+                            }
+                            else if(yIndex + y === cellArray.length)
+                                numOfAliveNeighbors++;
+                        }
+                        else if((xIndex - x === -1) && ((yIndex + y) <= cellArray.length))
+                            numOfAliveNeighbors++;
+                    }
+
+
+                }
+            }
         }
     }
+    //If the cell we are intrested in is alive
+    if(cellArray[xIndex][yIndex].alive === true) {
+        /* If the number of neighbors is below the loneliness threshold 
+         * or above the over pop threshhold, it should die
+         */
+        if(numOfAliveNeighbors > deathByOverpop || numOfAliveNeighbors < deathByLonelinessThresh)
+            return 0;
+        //Otherwise it should stay in equilibrium
+        else return 2;
+    }
+    //If the cell we are intrested in is dead
+    else {
+        /* If the dead cell has between gMin and gMax cells alive around it (inclusive)
+         * then return 1, it should reproduce. 
+         **/
+        if(numOfAliveNeighbors >= gMin && numOfAliveNeighbors <= gMax) return 1;
+        // It is already dead so do nothing.
+        else return 2;
+    }
+
+
 }
 /* Runs through the 2D array given by cellArray and colors each grid
  * according that cells alive status.
