@@ -1,27 +1,34 @@
 
-/* global ctx, gameCanvas, sizeOfCell */
+/* global ctx, gameCanvas, sizeOfCell, deadNeverAliveColor, deadWasAliveColor,
+ * aliveColor
+ *  */
 
 $(document).ready(function () {
     ctx = $('#gameCanvas').get(0).getContext('2d');
     gameCanvas = ctx.canvas;
     gameCanvas.width = $('#gameFieldDiv').width();
     gameCanvas.height = gameCanvas.width;
+    deadNeverAliveColor = "black";
+    deadWasAliveColor = "dimgray";
+    aliveColor = "#456ADA";
 
     sizeOfCell = createGrid(20);
     var cellArray = createCells(20);
     render(cellArray);
-    reproduceOrDie(0, 0, cellArray);
-    //alert(gameCanvas.width);
-    //drawLine(10 , gameCanvas.hight);
-    //createGameField(40);
-    //$("#cellCountSubmitButton").click(function (event) {
-    //    return getGameFieldSize();
-    //});
-    // $("#cellCountSubmitButton").click(function (event) {
-    //     createGameField(event.result);
-    // });
-    //createGameField(size);
-    //
+    $("#gameCanvas").click(function (e) {
+        var x = e.offsetX;
+        var y = e.offsetY;
+        var indexArray = calcCellFromLoc(x, y);
+        /*alert("The relative cordinates should be X: "+x+" and Y :"+y+
+         "\nThe size of a cell is: "+ sizeOfCell+
+         "\nThe xIndex is: "+ indexArray[0] + " and the yIndex is :" +indexArray[1]);*/
+
+        if(e.shiftKey) forceCellAlive(indexArray[0], indexArray[1], cellArray);
+        else if(e.ctrlKey)
+            forceCellDead(indexArray[0], indexArray[1], cellArray);
+        else toggleCellState(indexArray[0], indexArray[1], cellArray);
+
+    });
 });
 
 //Draws the game grid and returns the size of the side of the cells;
@@ -86,6 +93,57 @@ function randomize(cellArray) {
         }
     }
 
+}
+
+/* This function takes the x, y cordinates relative to the canvas and from 
+ * that calculates the cell index that has been clicked on. 
+ */
+function calcCellFromLoc(xCord, yCord) {
+    var xIndex = Math.floor(xCord / sizeOfCell);
+    var yIndex = Math.floor(yCord / sizeOfCell);
+    return [xIndex, yIndex];
+}
+
+/* This function just toggles the state of the cell from dead (dead never alive
+ * or dead, but was alive) to alive and updates the color, or if the cell is alive
+ * to dead and updates the color.  It must be past the index of the cell to
+ * toggle and the cellArray to update.  It does not do any bounds checking and
+ * it is on the function caller to make sure the indexes and cellArry state is valid.
+ */
+function toggleCellState(xIndex, yIndex, cellArray) {
+    if(cellArray[xIndex][yIndex].alive === 1) {
+        // If the cell is alive, set it to dead, but was alive and update the color
+        cellArray[xIndex][yIndex].alive = 2;
+        colorCellAt(xIndex, yIndex, deadWasAliveColor);
+    }
+    else {
+        /* If the cell was always dead, or was alive but now is dead, set 
+         * the cell to alive and update the color.
+         * */
+        cellArray[xIndex][yIndex].alive = 1;
+        colorCellAt(xIndex, yIndex, aliveColor);
+    }
+}
+
+/* This function forces a cell given by its xIndex, yIndex to be alive if it was
+ * dead and update the color.  If the cell was already alive it does nothing.
+ * This function does not do any bounds checking on xIndex, yIndex or cellArray.
+ */
+function forceCellAlive(xIndex, yIndex, cellArray) {
+    if(cellArray[xIndex][yIndex].alive === 0 || cellArray[xIndex][yIndex].alive === 2) {
+        cellArray[xIndex][yIndex].alive = 1;
+        colorCellAt(xIndex, yIndex, aliveColor);
+    }
+}
+/* This function does the opposite of forceCellAlive: if the cell was alive it
+ * changes the cell to dead but was alive and updates the color, otherwise it 
+ * nothing.  Like before no error checking is done.
+ */
+function forceCellDead(xIndex, yIndex, cellArray) {
+    if(cellArray[xIndex][yIndex].alive === 1) {
+        cellArray[xIndex][yIndex].alive = 2;
+        colorCellAt(xIndex, yIndex, deadWasAliveColor);
+    }
 }
 function computeNextStep(cellArray) {
     for (var x = 0; x < cellArray.length; x++) {
@@ -291,7 +349,7 @@ function reproduceOrDie(xIndex, yIndex, cellArray) {
         }
     }
     //If the cell we are intrested in is alive
-    if(cellArray[xIndex][yIndex].alive === true) {
+    if(cellArray[xIndex][yIndex].alive === 1) {
         /* If the number of neighbors is below the loneliness threshold 
          * or above the over pop threshhold, it should die
          */
@@ -305,7 +363,8 @@ function reproduceOrDie(xIndex, yIndex, cellArray) {
         /* If the dead cell has between gMin and gMax cells alive around it (inclusive)
          * then return 1, it should reproduce. 
          **/
-        if(numOfAliveNeighbors >= gMin && numOfAliveNeighbors <= gMax) return 1;
+        if(numOfAliveNeighbors >= gMin && numOfAliveNeighbors <= gMax)
+            return 1;
         // It is already dead so do nothing.
         else return 2;
     }
@@ -316,9 +375,6 @@ function reproduceOrDie(xIndex, yIndex, cellArray) {
  * according that cells alive status.
  */
 function render(cellArray) {
-    var deadNeverAliveColor = "black";
-    var deadWasAliveColor = "lightgrey";
-    var aliveColor = "#456ADA";
     for (var x = 0; x < cellArray.length; x++) {
         for (var y = 0; y < cellArray.length; y++) {
             if(cellArray[x][y].alive === 0) {
