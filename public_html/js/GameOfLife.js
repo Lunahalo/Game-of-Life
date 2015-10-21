@@ -1,6 +1,6 @@
 
 /* global ctx, gameCanvas, sizeOfCell, deadNeverAliveColor, deadWasAliveColor,
- * aliveColor
+ * aliveColor, cellcellsPerSide
  *  */
 
 $(document).ready(function () {
@@ -10,10 +10,13 @@ $(document).ready(function () {
     gameCanvas.height = gameCanvas.width;
     deadNeverAliveColor = "black";
     deadWasAliveColor = "dimgray";
-    aliveColor = "#456ADA";
+    //aliveColor = "#456ADA";
+    aliveColor = "deeppink";
+    cellsPerSide = 200;
+    simInterval = 0;
 
-    sizeOfCell = createGrid(20);
-    var cellArray = createCells(20);
+    sizeOfCell = createGrid(cellsPerSide);
+    cellArray = createCells(cellsPerSide);
     render(cellArray);
     $("#gameCanvas").click(function (e) {
         var x = e.offsetX;
@@ -28,6 +31,26 @@ $(document).ready(function () {
             forceCellDead(indexArray[0], indexArray[1], cellArray);
         else toggleCellState(indexArray[0], indexArray[1], cellArray);
 
+    });
+    var intervalId;
+    $("#startSim").click(function (e) {
+        intervalId = setInterval(startSim, simInterval);
+    });
+    $("#stopSim").click(function (e) {
+        clearInterval(intervalId);
+    });
+    $("#resetAllCellsButton").click(function(e) {
+        cellArray = createCells(cellsPerSide);
+        render(cellArray);
+    });
+    $("#rndFillCells").click(function(e) {
+        randomize(cellArray);
+        render(cellArray);
+    });
+    $("#advSimButton").click(function(e) {
+        var nextStepCellArray = computeNextStep(cellArray);
+        render(nextStepCellArray);
+        cellArray = nextStepCellArray;
     });
 });
 
@@ -63,6 +86,7 @@ function Cell(xindex, yindex, alive) {
     this.yindex = yindex;
     this.alive = alive;
 }
+
 /* Creates and initializes 2D array with size of each dim given by numOfCells 
  * and returns that array.
  */
@@ -84,6 +108,7 @@ function createCells(numOfCells) {
     }
     return cellArray;
 }
+
 /* Randomly sets all cells in cellArray to either alive or dead.
  */
 function randomize(cellArray) {
@@ -145,22 +170,37 @@ function forceCellDead(xIndex, yIndex, cellArray) {
         colorCellAt(xIndex, yIndex, deadWasAliveColor);
     }
 }
+
+function startSim() {
+    var nextStepCellArray = computeNextStep(cellArray);
+    render(nextStepCellArray);
+    cellArray = nextStepCellArray;
+}
+
+/* This function goes through the whole cellArray and finds out if each cell
+ * should reproduce, die or do nothing.  It then stores the state of the cell field
+ * during the step in a new array and returns that array.
+ */
 function computeNextStep(cellArray) {
+    var nextStepCellArray = createCells(cellsPerSide);
+
     for (var x = 0; x < cellArray.length; x++) {
         for (var y = 0; y < cellArray.length; y++) {
-            // There are enough cells around, so reproduce
             if(reproduceOrDie(x, y, cellArray) === 1) {
-                alert("reproduce!");
+                // There are enough cells around, so reproduce
+                nextStepCellArray[x][y].alive = 1;
             }
-            // There are too many cells arond, so die
             else if(reproduceOrDie(x, y, cellArray) === 0) {
-                alert("die!");
+                // There are too many cells around, so die
+                nextStepCellArray[x][y].alive = 2;
             }
             else {
-
+                // Nothing should happen, so the value is whatever the previous value was.
+                nextStepCellArray[x][y].alive = cellArray[x][y].alive;
             }
         }
     }
+    return nextStepCellArray;
 }
 /* Checks if the cell given by xIndex, yIndex in cellArray has enough
  * neighbors to reproduce, do nothing, or die.  It will return 0 if the cell
@@ -176,7 +216,7 @@ function reproduceOrDie(xIndex, yIndex, cellArray) {
     var gMin = 3;
     var gMax = 3;
     // 0 = edges dead, 1 = edges alive, 2 = edges wrap
-    var cellEdgeMode = 1;
+    var cellEdgeMode = 0;
     for (var x = 0; x <= radius; x++) {
         for (var y = 0; y <= radius; y++) {
             /* if x === 0 and y === 0 we need to skip that iteration because we don't 
@@ -371,6 +411,7 @@ function reproduceOrDie(xIndex, yIndex, cellArray) {
 
 
 }
+
 /* Runs through the 2D array given by cellArray and colors each grid
  * according that cells alive status.
  */
