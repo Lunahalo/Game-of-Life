@@ -12,68 +12,231 @@ $(document).ready(function () {
     deadWasAliveColor = "dimgray";
     //aliveColor = "#456ADA";
     aliveColor = "deeppink";
-    cellsPerSide = 200;
-    simInterval = 0;
+    cellsPerSide = 40;
+    simInterval = 500;
+
+    // 0 = edges dead, 1 = edges alive, 2 = edges wrap
+    cellEdgeMode = 0;
+    radius = 1;
+    deathByLonelinessThresh = 2;
+    deathByOverpop = 3;
+    gMin = 3;
+    gMax = 3;
 
     sizeOfCell = createGrid(cellsPerSide);
     cellArray = createCells(cellsPerSide);
-    render(cellArray);
+    //render(cellArray);
     $("#gameCanvas").click(function (e) {
         var x = e.offsetX;
         var y = e.offsetY;
         var indexArray = calcCellFromLoc(x, y);
-        /*alert("The relative cordinates should be X: "+x+" and Y :"+y+
-         "\nThe size of a cell is: "+ sizeOfCell+
-         "\nThe xIndex is: "+ indexArray[0] + " and the yIndex is :" +indexArray[1]);*/
-
         if(e.shiftKey) forceCellAlive(indexArray[0], indexArray[1], cellArray);
         else if(e.ctrlKey)
             forceCellDead(indexArray[0], indexArray[1], cellArray);
         else toggleCellState(indexArray[0], indexArray[1], cellArray);
 
     });
+
     var intervalId;
+    var gameAlreadyRunning = false;
     $("#startSim").click(function (e) {
-        intervalId = setInterval(startSim, simInterval);
+        if(gameAlreadyRunning === false) {
+            gameAlreadyRunning = true;
+            disableButtons();
+            intervalId = setInterval(startSim, simInterval);
+        }
     });
     $("#stopSim").click(function (e) {
-        clearInterval(intervalId);
+        if(gameAlreadyRunning === true) {
+            gameAlreadyRunning = false;
+            clearInterval(intervalId);
+            enableButtons();
+        }
     });
-    $("#resetAllCellsButton").click(function(e) {
-        cellArray = createCells(cellsPerSide);
-        render(cellArray);
+    $("#resetAllCellsButton").click(function (e) {
+        if(gameAlreadyRunning === true) {
+            gameAlreadyRunning = false;
+            clearInterval(intervalId);
+            enableButtons();
+            cellArray = createCells(cellsPerSide);
+            render(cellArray);
+        }
+        else {
+            cellArray = createCells(cellsPerSide);
+            render(cellArray);
+        }
+
     });
-    $("#rndFillCells").click(function(e) {
+    $("#rndFillCells").click(function (e) {
         randomize(cellArray);
         render(cellArray);
     });
-    $("#advSimButton").click(function(e) {
+    $("#advSimButton").click(function (e) {
         var nextStepCellArray = computeNextStep(cellArray);
         render(nextStepCellArray);
         cellArray = nextStepCellArray;
     });
+    $("#cellCountSubmitButton").click(function (e) {
+        e.preventDefault();
+        getSimOptions();
+        sizeOfCell = createGrid(cellsPerSide);
+        cellArray = createCells(cellsPerSide);
+    });
+    var resizeTimer;
+    $(window).on("resize", function(e) {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(function () {
+            ctx.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
+            sizeOfCell = createGrid(cellsPerSide);
+        }, 250);
+    });
 });
+
+function disableButtons() {
+    $("#cellCountSubmitButton").prop("disabled", true);
+    $("#rndFillCells").prop("disabled", true);
+    $("#advSimButton").prop("disabled", true);
+
+}
+
+function enableButtons() {
+    $("#cellCountSubmitButton").prop("disabled", false);
+    $("#rndFillCells").prop("disabled", false);
+    $("#advSimButton").prop("disabled", false);
+}
+
+function getSimOptions() {
+    var tempCellsPerSide = $("#cellCount").val();
+    if(tempCellsPerSide < 20) {
+        cellsPerSide = 20;
+        $("#cellCount").val(cellsPerSide);
+    }
+    else if(tempCellsPerSide > 200) {
+        cellsPerSide = 200;
+        $("#cellCount").val(cellsPerSide);
+    }
+    else {
+        cellsPerSide = tempCellsPerSide;
+        $("#cellCount").val(cellsPerSide);
+    }
+
+    var cellBeyondBoarderText = $('input[name=cellBeyondBoarderOptions]:checked', '#cellBeyondBoarderOptionsForm').val();
+    if(cellBeyondBoarderText === "dead") cellEdgeMode = 0;
+    else if(cellBeyondBoarderText === "alive") cellEdgeMode = 1;
+    else if(cellBeyondBoarderText === "toro") cellEdgeMode = 2;
+    var tempRadius = $("#cellNeighborRadius").val();
+    if(tempRadius < 1) {
+        radius = 1;
+        $("#cellNeighborRadius").val(radius);
+    }
+    else if(tempRadius > 10) {
+        radius = 10;
+        $("#cellNeighborRadius").val(radius);
+    }
+    else {
+        radius = tempRadius;
+        $("#cellNeighborRadius").val(radius);
+    }
+    var tempDeathByLonelinessThresh = $("#deathByLone").val();
+    var tempDeathByOverpop = $("#deathByOverpop").val();
+    //This ensures that deathByOverpop is less than its upper bound;
+    if(tempDeathByOverpop >= (4 * radius * radius + 4 * radius)) {
+        tempDeathByOverpop = ((4 * radius * radius + 4 * radius) - 1);
+    }
+    /* If the user tried to make loneliness greater than the death by overpopulation
+     * then make loneliness eaqual to death by overpopulation.
+     */
+    if(tempDeathByLonelinessThresh > tempDeathByOverpop) {
+        tempDeathByLonelinessThresh = tempDeathByOverpop;
+    }
+    if(tempDeathByOverpop < 1) {
+        tempDeathByOverpop = 1;
+    }/* We already checked to make sure death by over pop is not too large, now 
+     * check to make sure it is not too small.
+     * */
+    if(tempDeathByLonelinessThresh < 1) {
+        tempDeathByLonelinessThresh = 1;
+    }
+    /* This finally checks to make sure that death by loneliness by is not 
+     * greater than than death by over pop.
+     */
+    if(tempDeathByLonelinessThresh > tempDeathByOverpop) {
+        tempDeathByOverpop = tempDeathByLonelinessThresh;
+    }
+    /* We have already done all of our checks to ensure death by loneliness and
+     * death by overpop are within bounds, so assign the global variables.
+     */
+    deathByLonelinessThresh = tempDeathByLonelinessThresh;
+    $("#deathByLone").val(deathByLonelinessThresh);
+    deathByOverpop = tempDeathByOverpop;
+    $("#deathByOverpop").val(deathByOverpop);
+
+    var tempGMin = $("#genMinThreshold").val();
+    var tempGMax = $("#genMaxThreshold").val();
+    if(tempGMax >= (4 * radius * radius + 4 * radius)) {
+        tempGMax = ((4 * radius * radius + 4 * radius) - 1);
+    }
+    if(tempGMin > tempGMax) {
+        tempGMin = tempGMax;
+    }
+    if(tempGMax < 1) {
+        tempGMax = 1;
+    }
+    if(tempGMin < 1) {
+        tempGMin = 1;
+    }
+    /* This finally checks to make sure that death by over population is not 
+     * less than death by loneliness.
+     */
+    if(tempGMin > tempGMax) {
+        tempGMin = tempGMax;
+    }
+    gMin = tempGMin;
+    $("#genMinThreshold").val(gMin);
+    gMax = tempGMax;
+    $("#genMaxThreshold").val(gMax);
+    
+    var tempSimInterval = $("#simDelay").val();
+    if(tempSimInterval > 1000) tempSimInterval = 1000;
+    else if(tempSimInterval < 0) tempSimInterval = 0;
+    simInterval = tempSimInterval;
+    $("#simDelay").val(simInterval);
+
+}
 
 //Draws the game grid and returns the size of the side of the cells;
 function createGrid(numOfCellOnSize) {
+    ctx.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
+    $('#gameFieldDiv').width("100%");
+    var temp = $('#gameFieldDiv').width();
+    //alert(temp)
+    temp = temp - 250;
     var offset = 0.5;
+     $('#gameFieldDiv').width(temp);
     //Figure out what the largest cell size we can use without going over the game
+    gameCanvas.width = $('#gameFieldDiv').width();
     var cellSize = Math.floor(gameCanvas.width / numOfCellOnSize);
     //The canvas size should now be an even multiple of this.
     gameCanvas.width = numOfCellOnSize * cellSize;
     gameCanvas.height = gameCanvas.width;
     var totalWidth = numOfCellOnSize * cellSize + offset;
     $('#gameFieldDiv').width(totalWidth);
+    ctx.strokeStyle = "white";
     for (var x = cellSize; x < totalWidth; x += cellSize) {
+        ctx.beginPath();
         ctx.moveTo(x + offset, 0);
         ctx.lineTo(x + offset, gameCanvas.height);
+        ctx.stroke();
     }
     for (var y = cellSize; y < totalWidth; y += cellSize) {
+        ctx.beginPath();
         ctx.moveTo(0, y + offset);
         ctx.lineTo(gameCanvas.width, y + offset);
+        ctx.stroke();
     }
-    ctx.strokeStyle = "white";
-    ctx.stroke();
+    
+    
+    
     return cellSize;
 }
 
@@ -210,13 +373,7 @@ function computeNextStep(cellArray) {
  */
 function reproduceOrDie(xIndex, yIndex, cellArray) {
     var numOfAliveNeighbors = 0;
-    var radius = 1;
-    var deathByLonelinessThresh = 2;
-    var deathByOverpop = 3;
-    var gMin = 3;
-    var gMax = 3;
-    // 0 = edges dead, 1 = edges alive, 2 = edges wrap
-    var cellEdgeMode = 0;
+
     for (var x = 0; x <= radius; x++) {
         for (var y = 0; y <= radius; y++) {
             /* if x === 0 and y === 0 we need to skip that iteration because we don't 
